@@ -4,8 +4,11 @@ import com.google.common.io.BaseEncoding;
 import org.stellar.sdk.xdr.DecoratedSignature;
 import org.stellar.sdk.xdr.EnvelopeType;
 import org.stellar.sdk.xdr.SignatureHint;
+import org.stellar.sdk.xdr.TransactionEnvelope;
+import org.stellar.sdk.xdr.XdrDataInputStream;
 import org.stellar.sdk.xdr.XdrDataOutputStream;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -195,16 +198,71 @@ public class Transaction {
    */
   public String toEnvelopeXdrBase64() {
     try {
-      org.stellar.sdk.xdr.TransactionEnvelope envelope = this.toEnvelopeXdr();
+      TransactionEnvelope envelope = this.toEnvelopeXdr();
       ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
       XdrDataOutputStream xdrOutputStream = new XdrDataOutputStream(outputStream);
-      org.stellar.sdk.xdr.TransactionEnvelope.encode(xdrOutputStream, envelope);
-
+      TransactionEnvelope.encode(xdrOutputStream, envelope);
       BaseEncoding base64Encoding = BaseEncoding.base64();
       return base64Encoding.encode(outputStream.toByteArray());
     } catch (IOException e) {
-      throw new AssertionError(e);
+      throw new RuntimeException(e);
     }
+  }
+
+  /**
+   * Decodes a base64-encoded XDR {@link TransactionEnvelope}.
+   *
+   * @param encodedXdrTxEnvelope the base64-encoding of an XDR-encoded {@link TransactionEnvelope}.
+   * @return the decoded {@link TransactionEnvelope}
+   */
+  public static TransactionEnvelope decodeXdrEnvelope(String encodedXdrTxEnvelope) {
+    checkNotNull(encodedXdrTxEnvelope, "Transaction envelope cannot be null");
+    BaseEncoding base64Encoding = BaseEncoding.base64();
+    byte[] xdrTxEnvelope = base64Encoding.decode(encodedXdrTxEnvelope);
+    return decodeXdrEnvelope(xdrTxEnvelope);
+  }
+
+  /**
+   * Decodes an XDR {@link TransactionEnvelope}.
+   * @param xdrTxEnvelope the XDR encoded {@link TransactionEnvelope}
+   * @return the decoded {@link TransactionEnvelope}
+   */
+  public static TransactionEnvelope decodeXdrEnvelope(byte[] xdrTxEnvelope) {
+    ByteArrayInputStream inputStream = new ByteArrayInputStream(xdrTxEnvelope);
+    XdrDataInputStream xdrInputStream = new XdrDataInputStream(inputStream);
+    try {
+      return TransactionEnvelope.decode(xdrInputStream);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+  /**
+   * Constructs a Transaction object from a given {@link TransactionEnvelope} object.
+   * @param txEnv
+   * @return the new Transaction object
+   */
+  public static Transaction fromEnvelope(org.stellar.sdk.xdr.TransactionEnvelope txEnv) {
+    checkNotNull(txEnv, "Transaction envelope cannot be null");
+    org.stellar.sdk.xdr.Transaction xdrTx = txEnv.getTx();
+    KeyPair sourceAccount = KeyPair.fromXdrPublicKey(xdrTx.getSourceAccount().getAccountID());
+    long sequenceNumber = xdrTx.getSeqNum().getSequenceNumber().getUint64();
+    org.stellar.sdk.xdr.Operation[] xdrOps = xdrTx.getOperations();
+    Operation[] operations = new Operation[xdrOps.length];
+    for (int i = 0; i < xdrOps.length; i++) {
+      operations[i] = Operation.fromXdr(xdrOps[i]);
+    }
+    Memo memo = Memo.fromXdr(xdrTx.getMemo());
+    org.stellar.sdk.xdr.TimeBounds xdrTimeBounds = xdrTx.getTimeBounds();
+    TimeBounds timeBounds = null;
+    if (xdrTimeBounds != null) {
+      timeBounds = TimeBounds.fromXdr(xdrTimeBounds);
+    }
+    Transaction tx = new Transaction(sourceAccount, sequenceNumber, operations, memo, timeBounds);
+    DecoratedSignature[] signatures = txEnv.getSignatures();
+    for (int i = 0; i < signatures.length; i++) {
+      tx.mSignatures.add(signatures[i]);
+    }
+    return tx;
   }
 
   /**

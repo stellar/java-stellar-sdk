@@ -109,6 +109,63 @@ public class TransactionTest {
   }
 
   @Test
+  public void testTransactionFromEnvelopeXdrBase64() {
+    // GBPMKIRA2OQW2XZZQUCQILI5TMVZ6JNRKM423BSAISDM7ZFWQ6KWEBC4
+    KeyPair source = KeyPair.fromSecretSeed("SCH27VUZZ6UAKB67BDNF6FA42YMBMQCBKXWGMFD5TZ6S5ZZCZFLRXKHS");
+    KeyPair destination = KeyPair.fromAccountId("GDW6AUTBXTOC7FIKUO5BOO3OGLK4SF7ZPOBLMQHMZDI45J2Z6VXRB5NR");
+
+    long sequenceNumber = 2908908335136768L;
+    Account account = new Account(source, sequenceNumber);
+
+    Transaction tx1, tx2;
+    String xdrBase64Envelope;
+
+    // the simplest case
+    tx1 = new Transaction.Builder(account)
+            .addOperation(new CreateAccountOperation.Builder(destination, "2000").build())
+            .build();
+    tx1.sign(source);
+
+    xdrBase64Envelope = tx1.toEnvelopeXdrBase64();
+    tx2 = Transaction.fromEnvelope(Transaction.decodeXdrEnvelope(xdrBase64Envelope));
+    assertEquals(xdrBase64Envelope, tx2.toEnvelopeXdrBase64());
+
+    // transaction with memo
+    tx1 = new Transaction.Builder(account)
+            .addOperation(new CreateAccountOperation.Builder(destination, "2000").build())
+            .addMemo(Memo.text("Hello world!"))
+            .build();
+    tx1.sign(source);
+
+    xdrBase64Envelope = tx1.toEnvelopeXdrBase64();
+    tx2 = Transaction.fromEnvelope(Transaction.decodeXdrEnvelope(xdrBase64Envelope));
+    assertEquals(xdrBase64Envelope, tx2.toEnvelopeXdrBase64());
+
+    // transaction with time bounds
+    tx1 = new Transaction.Builder(account)
+            .addOperation(new CreateAccountOperation.Builder(destination, "2000").build())
+            .addTimeBounds(new TimeBounds(42, 1337))
+            .build();
+    tx1.sign(source);
+
+    xdrBase64Envelope = tx1.toEnvelopeXdrBase64();
+    tx2 = Transaction.fromEnvelope(Transaction.decodeXdrEnvelope(xdrBase64Envelope));
+    assertEquals(xdrBase64Envelope, tx2.toEnvelopeXdrBase64());
+
+    // transaction with memo and time bounds
+    tx1 = new Transaction.Builder(account)
+            .addOperation(new PaymentOperation.Builder(destination, new AssetTypeNative(), "2000").build())
+            .addMemo(Memo.text("Hello world!"))
+            .addTimeBounds(new TimeBounds(42, 1337))
+            .build();
+    tx1.sign(source);
+
+    xdrBase64Envelope = tx1.toEnvelopeXdrBase64();
+    tx2 = Transaction.fromEnvelope(Transaction.decodeXdrEnvelope(xdrBase64Envelope));
+    assertEquals(xdrBase64Envelope, tx2.toEnvelopeXdrBase64());
+  }
+
+  @Test
   public void testSha256HashSigning() throws FormatException {
     Network.usePublicNetwork();
 
