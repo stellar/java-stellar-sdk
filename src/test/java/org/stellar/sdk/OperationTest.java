@@ -480,7 +480,7 @@ public class OperationTest {
         String amount = "0.00001";
         String price = "0.85334384"; // n=5333399 d=6250000
         Price priceObj = Price.fromString(price);
-        long offerId = 1;
+        String offerId = "1";
 
         ManageSellOfferOperation operation = new ManageSellOfferOperation.Builder(selling, buying, amount, price)
                 .setOfferId(offerId)
@@ -493,7 +493,7 @@ public class OperationTest {
         assertEquals(100L, xdr.getBody().getManageSellOfferOp().getAmount().getInt64().longValue());
         assertTrue(parsedOperation.getSelling() instanceof AssetTypeNative);
         assertTrue(parsedOperation.getBuying() instanceof AssetTypeCreditAlphaNum4);
-        assertTrue(parsedOperation.getBuying().equals(buying));
+        assertEquals(parsedOperation.getBuying(), buying);
         assertEquals(amount, parsedOperation.getAmount());
         assertEquals(price, parsedOperation.getPrice());
         assertEquals(priceObj.getNumerator(), 5333399);
@@ -501,7 +501,7 @@ public class OperationTest {
         assertEquals(offerId, parsedOperation.getOfferId());
 
         assertEquals(
-                "AAAAAQAAAAC7JAuE3XvquOnbsgv2SRztjuk4RoBVefQ0rlrFMMQvfAAAAAMAAAAAAAAAAVVTRAAAAAAARP7bVZfAS1dHLFv8YF7W1zlX9ZTMg5bjImn5dCA1RSIAAAAAAAAAZABRYZcAX14QAAAAAAAAAAE=",
+                "AAAAAQAAAAC7JAuE3XvquOnbsgv2SRztjuk4RoBVefQ0rlrFMMQvfAAAAAMAAAAAAAAAAVVTRAAAAAAARP7bVZfAS1dHLFv8YF7W1zlX9ZTMg5bjImn5dCA1RSIAAAAAAAAAZABRYZcAX14QAAAAATEAAAA=",
                 operation.toXdrBase64());
     }
 
@@ -517,7 +517,7 @@ public class OperationTest {
         String amount = "0.00001";
         String price = "0.85334384"; // n=5333399 d=6250000
         Price priceObj = Price.fromString(price);
-        long offerId = 1;
+        String offerId = "1";
 
         ManageBuyOfferOperation operation = new ManageBuyOfferOperation.Builder(selling, buying, amount, price)
                 .setOfferId(offerId)
@@ -530,7 +530,7 @@ public class OperationTest {
         assertEquals(100L, xdr.getBody().getManageBuyOfferOp().getBuyAmount().getInt64().longValue());
         assertTrue(parsedOperation.getSelling() instanceof AssetTypeNative);
         assertTrue(parsedOperation.getBuying() instanceof AssetTypeCreditAlphaNum4);
-        assertTrue(parsedOperation.getBuying().equals(buying));
+        assertEquals(parsedOperation.getBuying(), buying);
         assertEquals(amount, parsedOperation.getAmount());
         assertEquals(price, parsedOperation.getPrice());
         assertEquals(priceObj.getNumerator(), 5333399);
@@ -538,7 +538,7 @@ public class OperationTest {
         assertEquals(offerId, parsedOperation.getOfferId());
 
         assertEquals(
-                "AAAAAQAAAAC7JAuE3XvquOnbsgv2SRztjuk4RoBVefQ0rlrFMMQvfAAAAAwAAAAAAAAAAVVTRAAAAAAARP7bVZfAS1dHLFv8YF7W1zlX9ZTMg5bjImn5dCA1RSIAAAAAAAAAZABRYZcAX14QAAAAAAAAAAE=",
+                "AAAAAQAAAAC7JAuE3XvquOnbsgv2SRztjuk4RoBVefQ0rlrFMMQvfAAAAAwAAAAAAAAAAVVTRAAAAAAARP7bVZfAS1dHLFv8YF7W1zlX9ZTMg5bjImn5dCA1RSIAAAAAAAAAZABRYZcAX14QAAAAATEAAAA=",
                 operation.toXdrBase64());
     }
 
